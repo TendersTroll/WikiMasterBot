@@ -22,3 +22,5 @@ input[type=range] { display:block; width:100%; margin-top:5px; }
 #closeIncognitoStatus { min-height: 18px; margin-top: 6px; font-size: 12px; opacity: .75; }
 
 .market-box{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}.market-box h2{margin-bottom:6px}#marketStats{color:#94a3b8;font-size:11px;margin-bottom:8px}
+
+input[type=text]{width:100%;padding:9px;margin:0 0 10px;background:#1e293b;color:#fff;border:1px solid #64748b;border-radius:8px}#tradeStatus{margin-top:10px;font-size:12px;white-space:pre-wrap}
