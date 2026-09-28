@@ -103,3 +103,14 @@ $("#closeIncognito").addEventListener("click", async () => {
 
 async function refreshMarketStats(){try{const d=await chrome.storage.local.get("wmph_market_cache"),e=Object.values(d.wmph_market_cache||{}),n=Date.now(),fresh=e.filter(x=>x?.average!=null&&n-(x.updatedAt||0)<90*60*1000).length;document.querySelector("#marketStats").textContent=e.length?fresh+" prix à jour · "+e.length+" cartes en cache":"Aucun prix en cache"}catch{document.querySelector("#marketStats").textContent="Cache indisponible"}}
 document.querySelector("#clearMarketCache").addEventListener("click",async()=>{const b=document.querySelector("#clearMarketCache");b.disabled=true;try{await chrome.storage.local.remove("wmph_market_cache");const t=await activeTab();if(t?.id)await chrome.tabs.sendMessage(t.id,{type:"wmph",action:"marketCacheCleared"}).catch(()=>{});document.querySelector("#marketStats").textContent="Cache vidé"}finally{b.disabled=false}});refreshMarketStats();
+
+
+const tradeTargetInput=document.querySelector("#tradeTarget");
+const tradeStartButton=document.querySelector("#tradeStart");
+const tradeStatusBox=document.querySelector("#tradeStatus");
+let tradeUiError="";
+chrome.storage.local.get("wmph_trade_target").then(data=>{if(tradeTargetInput)tradeTargetInput.value=data.wmph_trade_target||"";});
+tradeTargetInput?.addEventListener("input",()=>{tradeUiError="";});
+async function refreshTradeUi(){try{const tab=await activeTab();if(!tab?.id)return;const s=await chrome.tabs.sendMessage(tab.id,{type:"wmph",action:"tradeState"});tradeStatusBox.textContent=tradeUiError||s.status||"Prêt.";tradeStartButton.disabled=!!s.busy;tradeTargetInput.disabled=!!s.busy;}catch{tradeStatusBox.textContent="Ouvre le popup depuis l’onglet WikiMasters du compte secondaire.";}}
+tradeStartButton?.addEventListener("click",async()=>{tradeUiError="";const username=tradeTargetInput.value.trim();if(!username){tradeUiError="Renseigne le pseudo exact du compte principal.";tradeStatusBox.textContent=tradeUiError;return;}await chrome.storage.local.set({wmph_trade_target:username});try{const tab=await activeTab();const r=await chrome.tabs.sendMessage(tab.id,{type:"wmph",action:"tradeStart",username});if(r?.ok===false)throw new Error(r.error);await refreshTradeUi();}catch(e){tradeUiError=e.message||String(e);tradeStatusBox.textContent=tradeUiError;}});
+refreshTradeUi();setInterval(refreshTradeUi,1000);
