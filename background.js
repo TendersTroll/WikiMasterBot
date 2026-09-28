@@ -228,3 +228,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   return true;
 });
+
+
+// V4 — relais du compte privé vers les onglets WikiMasters publics.
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || msg.type !== 'wmph_trade' || msg.action !== 'sourceReady') return;
+  (async () => {
+    try {
+      const tabs = await chrome.tabs.query({});
+      const targets = tabs.filter(tab => {
+        if (!tab?.id || tab.incognito) return false;
+        try {
+          const u = new URL(tab.url || '');
+          return u.protocol === 'https:' && (u.hostname === 'www.wiki-masters.com' || u.hostname === 'wiki-masters.com');
+        } catch { return false; }
+      });
+      let sent = 0;
+      for (const tab of targets) {
+        try {
+          await chrome.tabs.sendMessage(tab.id, {type:'wmph', action:'acceptFriendRequest', sourceId:msg.sourceId, targetUsername:msg.targetUsername || '', accepted:!!msg.accepted});
+          sent++;
+        } catch {}
+      }
+      sendResponse({ok:true, sent});
+    } catch (error) { sendResponse({ok:false,error:String(error)}); }
+  })();
+  return true;
+});
