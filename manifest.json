@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WikiMasters Pack Hunter",
-  "version": "3.0.0",
-  "description": "WikiMasters Pack Hunter v3.0 — prix moyen du marché sous chaque carte, affichage progressif et nouvelle tentative au rechargement.",
+  "version": "4.0.0",
+  "description": "WikiMasters Pack Hunter V4 — packs, prix du marché et transfert de cartes entre compte secondaire et compte principal.",
   "permissions": [
     "storage",
     "windows"
@@ -34,6 +34,7 @@
         "https://wiki-masters.com/*"
       ],
       "js": [
+        "trade.js",
         "market.js",
         "content.js"
       ],
