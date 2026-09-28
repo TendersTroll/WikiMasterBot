@@ -7,7 +7,7 @@ Extension Chrome (Manifest V3) pour assister la navigation et l'ouverture de paq
 > Le projet est conçu pour un usage local et personnel. La vérification affichée sur `/pull` reste une **action manuelle** : l'extension n'essaie pas de contourner une protection anti-bot ou une vérification de type CAPTCHA/Turnstile.
 
 ![Chrome](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
-![Version](https://img.shields.io/badge/version-3.0.0-orange)
+![Version](https://img.shields.io/badge/version-4.0.0-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## ✨ Fonctionnalités
@@ -168,7 +168,7 @@ Vérifie que les deux onglets sont dans la **même fenêtre** et que l'accès en
 
 ## 📦 Version
 
-Version actuelle : **3.0.0**
+Version actuelle : **4.0.0**
 
 Historique synthétique :
 - `v2.4` : amélioration de l'initialisation des onglets privés ;
@@ -188,3 +188,46 @@ Merci de lire [`CONTRIBUTING.md`](CONTRIBUTING.md) avant d'ouvrir une Pull Reque
 ## 📄 Licence
 
 Ce projet est distribué sous licence MIT. Voir [`LICENSE`](LICENSE).
+
+
+## 🚀 V4 — Transfert entre compte secondaire et compte principal
+
+La V4 ajoute un transfert de cartes depuis le compte connecté dans la fenêtre privée vers le compte principal.
+
+### Fonctionnement
+
+1. Dans le popup du compte secondaire, renseigne le **pseudo exact du compte principal**.
+2. Clique sur **Transférer mes cartes**.
+3. L'extension recherche exactement le compte destinataire.
+4. Elle envoie la demande d'ami depuis le compte secondaire.
+5. La fenêtre publique reçoit l'identifiant du compte source et tente d'accepter la demande correspondante.
+6. Le compte secondaire vérifie que la relation est bien passée à `accepted`.
+7. Les cartes disponibles sont regroupées et proposées dans des offres.
+8. Les offres restent à accepter manuellement sur le compte principal.
+
+### Installation V4
+
+1. Clone ou télécharge ce dépôt.
+2. Ouvre `chrome://extensions/` (ou `opera://extensions/`).
+3. Active **Mode développeur**.
+4. Clique sur **Charger l'extension non empaquetée**.
+5. Sélectionne le dossier qui contient `manifest.json`.
+6. Dans les détails de l'extension, active **Autoriser en navigation privée**.
+7. Recharge les onglets WikiMasters déjà ouverts.
+8. Ouvre une fenêtre privée pour le compte secondaire.
+9. Ouvre une fenêtre normale pour le compte principal.
+10. Connecte les deux comptes.
+11. Dans le popup de la fenêtre privée, indique le pseudo exact du compte principal puis clique sur **Transférer mes cartes**.
+
+### Sécurité et limites
+
+- La vérification anti-bot/Turnstile de `/pull` reste **manuelle**.
+- Aucun mot de passe n'est demandé par l'extension.
+- Une requête POST d'offre n'est pas automatiquement rejouée en cas de réponse incertaine.
+- Les cartes déjà engagées dans des offres en attente sont ignorées.
+- En cas d'erreur serveur, vérifie d'abord **Échanges → Envoyées** avant de relancer un transfert.
+- Les offres créées doivent être acceptées sur le compte principal.
+
+### Version
+
+**V4.0.0 — Automated Friend & Card Transfer**
