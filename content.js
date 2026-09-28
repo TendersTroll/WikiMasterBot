@@ -778,6 +778,117 @@
     return true;
   }
 
+
+  // ================= V4 — transfert de cartes =================
+  let tradeRunner = null;
+  let tradeBusy = false;
+  let tradeStatus = "Prêt.";
+
+  async function tradeRequest(path, body) {
+    const response = await fetch(path, {
+      method: body ? "POST" : "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {"Content-Type":"application/json"},
+      ...(body ? {body: JSON.stringify(body)} : {})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = [data.error, data.message, data.code].filter(v => typeof v === "string").join(" / ").slice(0, 600);
+      throw new Error((body ? "POST " : "GET ") + path + " — HTTP " + response.status + " : " + (detail || "requête refusée"));
+    }
+    return data;
+  }
+
+  function reactPropsV4(el) {
+    if (!el) return null;
+    for (const key of Object.keys(el)) if (key.startsWith("__reactProps$")) {
+      try { return el[key]; } catch {}
+    }
+    return null;
+  }
+
+  function containsUserIdV4(el, sourceId) {
+    const seen = new Set();
+    let node = el;
+    for (let depth = 0; node && depth < 12; depth++, node = node.parentElement) {
+      const props = reactPropsV4(node);
+      if (!props) continue;
+      const stack = [props];
+      while (stack.length) {
+        const value = stack.pop();
+        if (!value || typeof value !== "object" || seen.has(value)) continue;
+        seen.add(value);
+        for (const [k,v] of Object.entries(value)) {
+          if ((k === "id" || k.endsWith("_id")) && String(v) === String(sourceId)) return true;
+          if (v && typeof v === "object" && seen.size < 1000) stack.push(v);
+        }
+      }
+    }
+    return false;
+  }
+
+  async function acceptIncomingFriendV4(sourceId) {
+    if (!sourceId || !isWikiMastersPage()) return false;
+    const labels = [/^accepter$/i, /^accepter la demande$/i, /^accept$/i, /^accept request$/i];
+    const deadline = Date.now() + 12000;
+    while (Date.now() < deadline) {
+      const button = [...document.querySelectorAll("button")].find(btn => {
+        if (!isVisible(btn) || btn.disabled) return false;
+        const text = normalize(btn.innerText || btn.textContent);
+        return labels.some(rx => rx.test(text)) && containsUserIdV4(btn, sourceId);
+      });
+      if (button) {
+        button.click();
+        return true;
+      }
+      await sleep(250);
+    }
+    return false;
+  }
+
+  async function startTradeV4(username) {
+    if (tradeBusy) throw new Error("Un transfert est déjà en cours.");
+    username = String(username || "").trim();
+    if (!username) throw new Error("Renseigne le pseudo exact du compte principal.");
+    tradeBusy = true;
+    tradeStatus = "Démarrage…";
+    tradeRunner = new WMPHTradeRunner({
+      request: tradeRequest,
+      report: text => { tradeStatus = text; },
+      sleep,
+      journal: {
+        get: async key => (await chrome.storage.local.get(key))[key],
+        set: (key,value) => chrome.storage.local.set({[key]:value}),
+        remove: key => chrome.storage.local.remove(key)
+      }
+    });
+    try {
+      await tradeRunner.run(username);
+    } catch (error) {
+      tradeStatus = (tradeRunner.sent ? tradeRunner.sent + " carte(s) déjà proposée(s). " : "") + error.message;
+    } finally {
+      tradeBusy = false;
+    }
+  }
+
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (!msg || msg.type !== "wmph") return;
+    if (msg.action === "tradeStart") {
+      startTradeV4(msg.username).then(() => sendResponse({ok:true})).catch(error => sendResponse({ok:false,error:String(error)}));
+      return true;
+    }
+    if (msg.action === "tradeState") {
+      sendResponse({ok:true,busy:tradeBusy,status:tradeStatus});
+      return;
+    }
+    if (msg.action === "acceptFriendRequest") {
+      if (sender?.tab?.incognito) { sendResponse({ok:false,error:"Onglet privé refusé."}); return; }
+      acceptIncomingFriendV4(msg.sourceId).then(ok => sendResponse({ok,accepted:ok})).catch(error => sendResponse({ok:false,error:String(error)}));
+      return true;
+    }
+  });
+
   async function init() {
     // Install navigation monitoring as early as possible so a Next.js/SPA
     // transition to /pull is detected without requiring a manual reload.
