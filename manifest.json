@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "WikiMasters Pack Hunter",
   "version": "4.0.0",
-  "description": "WikiMasters Pack Hunter V4 — packs, prix du marché et transfert de cartes entre compte secondaire et compte principal.",
+  "description": "WikiMasters Pack Hunter v3.4 — V3 stable + transfert privé/public, acceptation automatique des demandes d’ami et récupération adaptative des erreurs API.",
   "permissions": [
     "storage",
     "windows"
@@ -35,10 +35,19 @@
       ],
       "js": [
         "trade.js",
-        "market.js",
         "content.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.wiki-masters.com/*",
+        "https://wiki-masters.com/*"
+      ],
+      "js": [
+        "market.js"
+      ],
+      "run_at": "document_idle"
     },
     {
       "matches": [
